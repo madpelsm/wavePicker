@@ -39,7 +39,9 @@ int main(int argc, char* argv[]) {
     for (auto x : parameters) {
         printf("%s:%f\n", x.first.c_str(), x.second);
     }
-    // d = parameters["d"], H = parameters["H"], T = parameters["T"];
+    d = parameters["d"] != 0 ? parameters["d"] : d,
+    H = parameters["H"] != 0 ? parameters["H"] : H,
+    T = parameters["T"] != 0 ? parameters["T"] : T;
     WavePick wavepicker1(H, T, d);
 
     std::string filename = "mehaute.png";
