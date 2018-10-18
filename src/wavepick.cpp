@@ -1,6 +1,6 @@
+#include <dep/lodepng/lodepng.h>
 #include <src/wavepick.h>
-
-WavePick::WavePick() {}
+#include <cmath>
 
 WavePick::WavePick(double H, double T, double d) : m_H(H), m_T(T), m_d(d) {}
 
@@ -23,14 +23,20 @@ std::string WavePick::get_theory_name(int R, int G, int B) {
     return "Theory not found";
 }
 
-void WavePick::draw_marker(std::vector<unsigned char> &image, int xCoord,
-                           int yCoord, int w, int radius) {
-    for (auto i = 0; i < radius * 2; i++) {
-        for (auto k = 0; k < radius * 2; k++) {
-            image[(yCoord - radius + k) * 4 * w + xCoord * 4 + i * 4 + 0] = 255;
-            image[(yCoord - radius + k) * 4 * w + xCoord * 4 + i * 4 + 1] = 0;
-            image[(yCoord - radius + k) * 4 * w + xCoord * 4 + i * 4 + 2] = 0;
-            image[(yCoord - radius + k) * 4 * w + xCoord * 4 + i * 4 + 3] = 255;
+void WavePick::draw_marker(std::vector<unsigned char> &image, int _xCoord,
+                           int _yCoord, int w, int radius, int offset_x,
+                           int offset_y) {
+    int yCoord = _yCoord + offset_y, xCoord = _xCoord + offset_x;
+    for (auto i = 0; i < radius * 2 + 1; i++) {
+        for (auto k = 0; k < radius * 2 + 1; k++) {
+            image[((yCoord - radius + k) * w + (xCoord - radius + i)) * 4 + 0] =
+                255;
+            image[((yCoord - radius + k) * w + (xCoord - radius + i)) * 4 + 1] =
+                0;
+            image[((yCoord - radius + k) * w + (xCoord - radius + i)) * 4 + 2] =
+                0;
+            image[((yCoord - radius + k) * w + (xCoord - radius + i)) * 4 + 3] =
+                255;
         }
     }
 }
@@ -38,21 +44,26 @@ void WavePick::draw_marker(std::vector<unsigned char> &image, int xCoord,
 int *WavePick::get_wave_color(std::vector<unsigned char> &image, int xCoord,
                               int yCoord, int w, int radius) {
     static int RGB[] = {0, 0, 0};
-    for (auto i = 0; i < radius * 2; i++) {
-        for (auto k = 0; k < radius * 2; k++) {
+    int i = 0, k = 0;
+    for (i = 0; i < radius * 2 + 1; i++) {
+        for (k = 0; k < radius * 2 + 1; k++) {
             RGB[0] +=
-                image[(yCoord - radius + k) * 4 * w + xCoord * 4 + i * 4 + 0];
+                image[((yCoord - radius + k) * w + (xCoord - radius + i)) * 4 +
+                      0];
             RGB[1] +=
-                image[(yCoord - radius + k) * 4 * w + xCoord * 4 + i * 4 + 1];
+                image[((yCoord - radius + k) * w + (xCoord - radius + i)) * 4 +
+                      1];
             RGB[2] +=
-                image[(yCoord - radius + k) * 4 * w + xCoord * 4 + i * 4 + 2];
+                image[((yCoord - radius + k) * w + (xCoord - radius + i)) * 4 +
+                      2];
         }
     }
     for (size_t t = 0; t < 3; t++) {
-        RGB[t] /= (4 * radius * radius);
+        RGB[t] /= i * k;
     }
     return RGB;
 }
+
 void WavePick::set_H(double H) { m_H = H; }
 
 void WavePick::set_T(double T) { m_T = T; }
@@ -83,11 +94,12 @@ int *WavePick::get_coords(int w, int h) {
         y_value = yMin;
     }
 
-    double auxX = h / 3 * log10(xMax / x_value);
-    double auxY = h / 3 * log10(y_value / yMin);
+    double auxX = h / 3 * std::log10(xMax / x_value);
+    double auxY = h / 3 * std::log10(y_value / yMin);
 
     int xCoord = xMaxPix - auxX;
     int yCoord = yMinPix - auxY;
     static int coords[] = {xCoord, yCoord};
     return coords;
 }
+
